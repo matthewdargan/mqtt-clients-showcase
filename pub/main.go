@@ -1,10 +1,14 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
+	"log"
+	"os"
+	"os/signal"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/matthewdargan/mqtt-clients-showcase/internal/room"
 )
 
 const (
@@ -15,8 +19,20 @@ const (
 	topic          = "go/living_room_temperature"
 	delay          = 1 * time.Second
 	minTemp        = 68
-	maxTemp        = 73
+	maxTemp        = 74
 )
+
+func publishSensorData(client mqtt.Client, data room.SensorData) {
+	msg, err := json.Marshal(data)
+	if err != nil {
+		log.Fatalf("Error marshalling JSON: %v\n", err)
+	}
+	if token := client.Publish(topic, 0, false, msg); token.Wait() && token.Error() != nil {
+		log.Fatalln(token.Error())
+	}
+	log.Printf(`Sent %s to topic "%s"`, msg, topic)
+	time.Sleep(delay)
+}
 
 func main() {
 	opts := mqtt.NewClientOptions()
@@ -25,16 +41,25 @@ func main() {
 	opts.SetPassword(password)
 	client := mqtt.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
-		fmt.Println(token.Error())
-		return
+		log.Fatalln(token.Error())
 	}
 	defer client.Disconnect(disconnectWait)
 
-	for temp := minTemp; temp < maxTemp; temp++ {
-		msg := fmt.Sprintf("%d", temp)
-		token := client.Publish(topic, 0, false, msg)
-		token.Wait()
-		fmt.Printf("Sent %s to topic %s\n", msg, topic)
-		time.Sleep(delay)
+	sigint := make(chan os.Signal, 1)
+	signal.Notify(sigint, os.Interrupt)
+	go func() {
+		<-sigint
+		log.Println("Disconnecting...")
+		client.Disconnect(disconnectWait)
+		os.Exit(0)
+	}()
+
+	for {
+		for temp := minTemp; temp <= maxTemp; temp++ {
+			publishSensorData(client, room.SensorData{Temperature: temp})
+		}
+		for temp := maxTemp - 1; temp > minTemp; temp-- {
+			publishSensorData(client, room.SensorData{Temperature: temp})
+		}
 	}
 }
