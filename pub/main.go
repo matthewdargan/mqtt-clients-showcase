@@ -1,6 +1,8 @@
 // Copyright 2023 Matthew P. Dargan.
 // SPDX-License-Identifier: Apache-2.0
 
+// Pub is an MQTT publisher service that simulates sending room sensor data to a broker.
+// The data is published to the specified MQTT topic at regular intervals.
 package main
 
 import (

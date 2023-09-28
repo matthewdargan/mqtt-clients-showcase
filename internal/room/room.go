@@ -3,6 +3,7 @@
 
 package room
 
+// SensorData represents sensor data for a room.
 type SensorData struct {
-	Temperature int `json:"temperature"`
+	Temperature int `json:"temperature"` // temperature in degrees Fahrenheit
 }

@@ -14,6 +14,10 @@ import (
 
 func TestPublishSensorDataIntegration(t *testing.T) {
 	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping integration tests")
+	}
+
 	opts := mqtt.NewClientOptions().AddBroker(server)
 	client := mqtt.NewClient(opts)
 	token := client.Connect()

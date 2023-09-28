@@ -1,6 +1,9 @@
 // Copyright 2023 Matthew P. Dargan.
 // SPDX-License-Identifier: Apache-2.0
 
+// Sub is an MQTT subscriber service that listens to a topic for room sensor data.
+// It processes the received data to set the fan status based on a defined threshold
+// and prints the current temperature and fan status.
 package main
 
 import (
