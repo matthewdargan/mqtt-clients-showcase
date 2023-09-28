@@ -1,3 +1,6 @@
+// Copyright 2023 Matthew P. Dargan.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -19,11 +22,11 @@ const (
 	fanOnThreshold = 71
 )
 
-func messageHandler(client mqtt.Client, msg mqtt.Message) {
+func handleMessage(client mqtt.Client, msg mqtt.Message) {
 	var data room.SensorData
-	err := json.Unmarshal(msg.Payload(), &data)
-	if err != nil {
-		log.Fatalf("Error unmarshalling JSON: %v\n", err)
+	if err := json.Unmarshal(msg.Payload(), &data); err != nil {
+		log.Printf("Error unmarshalling JSON: %v\n", err)
+		return
 	}
 
 	fanStatus := "Off"
@@ -39,12 +42,14 @@ func main() {
 	opts.SetUsername(username)
 	opts.SetPassword(password)
 	client := mqtt.NewClient(opts)
-	if token := client.Connect(); token.Wait() && token.Error() != nil {
+	token := client.Connect()
+	if token.Wait() && token.Error() != nil {
 		log.Fatalln(token.Error())
 	}
 	defer client.Disconnect(disconnectWait)
 
-	if token := client.Subscribe(topic, 0, messageHandler); token.Wait() && token.Error() != nil {
+	token = client.Subscribe(topic, 0, handleMessage)
+	if token.Wait() && token.Error() != nil {
 		log.Println(token.Error())
 		return
 	}

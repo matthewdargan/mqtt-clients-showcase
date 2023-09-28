@@ -1,3 +1,6 @@
+// Copyright 2023 Matthew P. Dargan.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -27,7 +30,8 @@ func publishSensorData(client mqtt.Client, data room.SensorData) {
 	if err != nil {
 		log.Fatalf("Error marshalling JSON: %v\n", err)
 	}
-	if token := client.Publish(topic, 0, false, msg); token.Wait() && token.Error() != nil {
+	token := client.Publish(topic, 0, false, msg)
+	if token.Wait() && token.Error() != nil {
 		log.Fatalln(token.Error())
 	}
 	log.Printf(`Sent %s to topic "%s"`, msg, topic)
@@ -40,7 +44,8 @@ func main() {
 	opts.SetUsername(username)
 	opts.SetPassword(password)
 	client := mqtt.NewClient(opts)
-	if token := client.Connect(); token.Wait() && token.Error() != nil {
+	token := client.Connect()
+	if token.Wait() && token.Error() != nil {
 		log.Fatalln(token.Error())
 	}
 	defer client.Disconnect(disconnectWait)
