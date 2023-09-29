@@ -30,7 +30,7 @@ func (m *MockMQTTMessage) Payload() []byte {
 func TestHandleMessage(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {
-		data     room.SensorData
+		data     any
 		expected string
 	}{
 		{data: room.SensorData{Temperature: 50}, expected: "Current Temperature: 50 degrees - Fan Status: Off\n"},
@@ -44,6 +44,18 @@ func TestHandleMessage(t *testing.T) {
 		{data: room.SensorData{Temperature: 90}, expected: "Current Temperature: 90 degrees - Fan Status: On\n"},
 		{data: room.SensorData{Temperature: 95}, expected: "Current Temperature: 95 degrees - Fan Status: On\n"},
 		{data: room.SensorData{Temperature: 100}, expected: "Current Temperature: 100 degrees - Fan Status: On\n"},
+		{
+			data:     123,
+			expected: "Error unmarshalling JSON: json: cannot unmarshal number into Go value of type room.SensorData\n",
+		},
+		{
+			data:     false,
+			expected: "Error unmarshalling JSON: json: cannot unmarshal bool into Go value of type room.SensorData\n",
+		},
+		{
+			data:     []byte(`{"temperature": false}`),
+			expected: "Error unmarshalling JSON: json: cannot unmarshal string into Go value of type room.SensorData\n",
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -61,7 +73,7 @@ func TestHandleMessage(t *testing.T) {
 
 		got := buf.String()[20:] // Remove date and time from log before comparison
 		if got != testCase.expected {
-			t.Errorf("For temperature %d, got %s, want %s", testCase.data.Temperature, got, testCase.expected)
+			t.Errorf("got %s, want %s", got, testCase.expected)
 		}
 	}
 }
